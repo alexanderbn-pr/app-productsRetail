@@ -43,13 +43,9 @@ public class SimilarProductsService {
             }
             List<ProductDetail> similarProducts = new ArrayList<>();
             for (String id : similarIds) {
-                try {
-                    String detailUrl = mocksBaseUrl + "/product/" + id;
-                    ProductDetail detail = restTemplate.getForObject(detailUrl, ProductDetail.class);
-                    if (detail != null) {
-                        similarProducts.add(detail);
-                    }
-                } catch (HttpClientErrorException.NotFound e) {
+                ProductDetail detail = getProductDetailById(id);
+                if (detail != null) {
+                    similarProducts.add(detail);
                 }
             }
             return ResponseEntity.ok(similarProducts);
@@ -57,6 +53,20 @@ public class SimilarProductsService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Obtiene el detalle de un producto por su ID.
+     * @param id ID del producto.
+     * @return Detalle del producto o null si no se encuentra.
+     */
+    private ProductDetail getProductDetailById(String id) {
+        try {
+            String detailUrl = mocksBaseUrl + "/product/" + id;
+            return restTemplate.getForObject(detailUrl, ProductDetail.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
         }
     }
 
