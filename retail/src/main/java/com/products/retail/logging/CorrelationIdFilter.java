@@ -1,5 +1,6 @@
 package com.products.retail.logging;
 
+import com.products.retail.constant.ApiConstants;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,9 +18,6 @@ import java.util.UUID;
 @Component
 public class CorrelationIdFilter implements Filter {
 
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
-    private static final String MDC_KEY = "correlationId";
-
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -27,18 +25,18 @@ public class CorrelationIdFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String correlationId = httpRequest.getHeader(CORRELATION_ID_HEADER);
+        String correlationId = httpRequest.getHeader(ApiConstants.CORRELATION_ID_HEADER);
         if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
         }
 
-        MDC.put(MDC_KEY, correlationId);
-        httpResponse.setHeader(CORRELATION_ID_HEADER, correlationId);
+        MDC.put(ApiConstants.MDC_CORRELATION_ID_KEY, correlationId);
+        httpResponse.setHeader(ApiConstants.CORRELATION_ID_HEADER, correlationId);
 
         try {
             chain.doFilter(request, response);
         } finally {
-            MDC.remove(MDC_KEY);
+            MDC.remove(ApiConstants.MDC_CORRELATION_ID_KEY);
         }
     }
 }

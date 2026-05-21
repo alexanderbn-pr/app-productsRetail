@@ -1,5 +1,6 @@
 package com.products.retail.config;
 
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.model.ProductDetail;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,19 +34,20 @@ class CacheConfigTest {
 
     @Test
     void shouldHaveSimilarIdsCacheConfigured() {
-        Cache cache = cacheManager.getCache("similarIds");
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_SIMILAR_IDS);
         assertThat(cache).isNotNull();
     }
 
     @Test
     void shouldHaveProductDetailsCacheConfigured() {
-        Cache cache = cacheManager.getCache("productDetails");
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_PRODUCT_DETAILS);
         assertThat(cache).isNotNull();
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void similarIdsCacheStoresAndRetrievesValues() {
-        Cache cache = cacheManager.getCache("similarIds");
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_SIMILAR_IDS);
         assertThat(cache).isNotNull();
 
         ProductDetail detail = new ProductDetail("1", "cached-product", new BigDecimal("15.00"), true);
@@ -55,7 +57,6 @@ class CacheConfigTest {
         assertThat(wrapper).isNotNull();
         assertThat(wrapper.get()).isNotNull();
 
-        @SuppressWarnings("unchecked")
         List<ProductDetail> cached = (List<ProductDetail>) wrapper.get();
         assertThat(cached).hasSize(1);
         assertThat(cached.get(0).getName()).isEqualTo("cached-product");
@@ -63,7 +64,7 @@ class CacheConfigTest {
 
     @Test
     void productDetailsCacheStoresAndRetrievesValues() {
-        Cache cache = cacheManager.getCache("productDetails");
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_PRODUCT_DETAILS);
         assertThat(cache).isNotNull();
 
         ProductDetail detail = new ProductDetail("5", "detail-cached", new BigDecimal("99.99"), true);
@@ -79,7 +80,7 @@ class CacheConfigTest {
 
     @Test
     void cacheMissReturnsNull() {
-        Cache cache = cacheManager.getCache("similarIds");
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_SIMILAR_IDS);
         assertThat(cache).isNotNull();
 
         Cache.ValueWrapper wrapper = cache.get("non-existent-key");

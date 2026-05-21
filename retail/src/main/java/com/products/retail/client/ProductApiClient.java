@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.exception.ProductNotFoundException;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -32,9 +33,6 @@ import java.util.concurrent.TimeUnit;
 public class ProductApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(ProductApiClient.class);
-
-    private static final long DETAIL_TIMEOUT_SECONDS = 3;
-    private static final long BATCH_TIMEOUT_SECONDS = 5;
 
     private final RestTemplate restTemplate;
     private final ExecutorService executor;
@@ -75,7 +73,7 @@ public class ProductApiClient {
                     log.debug("calling_product_api url={}", url);
                     return restTemplate.getForObject(url, ProductDetail.class);
                 }, executor)
-                .orTimeout(DETAIL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                .orTimeout(ApiConstants.DETAIL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
@@ -122,7 +120,7 @@ public class ProductApiClient {
                         }))
                 .toList();
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]))
                 .join();
 
         return futures.stream()

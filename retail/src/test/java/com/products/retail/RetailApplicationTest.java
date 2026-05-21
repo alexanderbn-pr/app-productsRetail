@@ -1,0 +1,71 @@
+package com.products.retail;
+
+import com.products.retail.client.ProductApiClient;
+import com.products.retail.constant.ApiConstants;
+import com.products.retail.exception.GlobalExceptionHandler;
+import com.products.retail.service.SimilarProductsService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.web.client.RestTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Integration test that verifies the full Spring application context loads
+ * successfully with all expected beans registered.
+ * <p>
+ * Validates wiring correctness: DI, auto-configuration, and custom bean
+ * definitions from config classes.
+ */
+@SpringBootTest
+class RetailApplicationTest {
+
+    @Autowired(required = false)
+    private SimilarProductsService similarProductsService;
+
+    @Autowired(required = false)
+    private ProductApiClient productApiClient;
+
+    @Autowired(required = false)
+    private CacheManager cacheManager;
+
+    @Autowired(required = false)
+    private RestTemplate restTemplate;
+
+    @Autowired(required = false)
+    private GlobalExceptionHandler globalExceptionHandler;
+
+    @Test
+    void applicationContextLoadsWithAllCoreBeans() {
+        assertThat(similarProductsService)
+                .as("SimilarProductsService bean should be created by @Service scanning")
+                .isNotNull();
+        assertThat(productApiClient)
+                .as("ProductApiClient bean should be created by @Service scanning")
+                .isNotNull();
+        assertThat(cacheManager)
+                .as("CacheManager bean should be created by CacheConfig")
+                .isNotNull();
+        assertThat(restTemplate)
+                .as("RestTemplate bean should be created by RestTemplateConfig")
+                .isNotNull();
+        assertThat(globalExceptionHandler)
+                .as("GlobalExceptionHandler bean should be created by @RestControllerAdvice")
+                .isNotNull();
+    }
+
+    @Test
+    void cacheManagerIsCaffeineBasedWithExpectedCaches() {
+        assertThat(cacheManager)
+                .as("CacheManager must be a CaffeineCacheManager instance")
+                .isInstanceOf(CaffeineCacheManager.class);
+
+        assertThat(cacheManager.getCacheNames())
+                .as("CaffeineCacheManager should register both named caches")
+                .hasSize(2)
+                .containsExactlyInAnyOrder(ApiConstants.CACHE_SIMILAR_IDS, ApiConstants.CACHE_PRODUCT_DETAILS);
+    }
+}

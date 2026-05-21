@@ -1,5 +1,6 @@
 package com.products.retail.exception;
 
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.dto.ErrorResponse;
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
@@ -43,7 +44,7 @@ class GlobalExceptionHandlerTest {
     void productNotFoundExceptionReturns404() throws Exception {
         mockMvc.perform(get("/test/product-not-found"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("PRODUCT_NOT_FOUND"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Product not found: missing-id"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
@@ -52,7 +53,7 @@ class GlobalExceptionHandlerTest {
     void illegalArgumentExceptionReturns400() throws Exception {
         mockMvc.perform(get("/test/illegal-argument"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_BAD_REQUEST))
                 .andExpect(jsonPath("$.message").value("Invalid product ID"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
@@ -61,7 +62,7 @@ class GlobalExceptionHandlerTest {
     void httpClientErrorNotFoundReturns404() throws Exception {
         mockMvc.perform(get("/test/http-not-found"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_NOT_FOUND))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
@@ -69,7 +70,7 @@ class GlobalExceptionHandlerTest {
     void callNotPermittedExceptionReturns503() throws Exception {
         mockMvc.perform(get("/test/circuit-breaker"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_SERVICE_UNAVAILABLE))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
@@ -77,7 +78,7 @@ class GlobalExceptionHandlerTest {
     void bulkheadFullExceptionReturns429() throws Exception {
         mockMvc.perform(get("/test/bulkhead-full"))
                 .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.code").value("TOO_MANY_REQUESTS"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_TOO_MANY_REQUESTS))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
@@ -85,7 +86,7 @@ class GlobalExceptionHandlerTest {
     void genericExceptionReturns500() throws Exception {
         mockMvc.perform(get("/test/generic-error"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_INTERNAL))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 

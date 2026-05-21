@@ -1,5 +1,6 @@
 package com.products.retail.controller;
 
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.dto.ProductDetailResponse;
 import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
@@ -74,7 +75,7 @@ class SimilarProductsControllerTest {
 
         mockMvc.perform(get("/product/{productId}/similar", productId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("PRODUCT_NOT_FOUND"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Product not found: notfound"));
     }
 
@@ -87,7 +88,7 @@ class SimilarProductsControllerTest {
 
         mockMvc.perform(get("/product/{productId}/similar", productId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_INTERNAL))
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
     }
 }

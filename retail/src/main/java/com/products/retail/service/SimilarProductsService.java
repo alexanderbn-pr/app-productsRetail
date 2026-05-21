@@ -1,6 +1,7 @@
 package com.products.retail.service;
 
 import com.products.retail.client.ProductApiClient;
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -38,7 +39,7 @@ public class SimilarProductsService {
      * @param productId the base product ID
      * @return similar products list (never {@code null})
      */
-    @Cacheable("similarIds")
+    @Cacheable(ApiConstants.CACHE_SIMILAR_IDS)
     @CircuitBreaker(name = "similarProducts", fallbackMethod = "fallbackSimilarProducts")
     @Bulkhead(name = "similarProductsBulkhead")
     @Retry(name = "similarProductsRetry", fallbackMethod = "fallbackSimilarProducts")
