@@ -15,8 +15,6 @@
 - **Pattern Matching** — `instanceof` y `switch` más expresivos.
 - **Text Blocks** — strings multilínea limpios para SQL, JSON, logs.
 
-**Alternativas**: Kotlin (menos adopción enterprise), Go (sin orientación a objetos), Python (rendimiento y tipado).
-
 **Cómo lo usamos**: Records para DTOs (`ProductDetailResponse`, `ErrorResponse`), `CompletableFuture` con virtual threads ready, `List.of()` para colecciones inmutables.
 
 ---
@@ -26,8 +24,6 @@
 **Problema**: Configurar un servidor web, DI, validación, caché, AOP y métricas desde cero requeriría cientos de líneas de boilerplate.
 
 **Por qué Spring Boot**: Es el estándar de facto para APIs REST en Java. Auto-configuration reduce el setup a un `@SpringBootApplication`. La integración con Resilience4j, Caffeine, Actuator y OpenAPI es nativa.
-
-**Alternativas**: Quarkus (menor ecosistema, mejor para serverless), Micronaut (menos adopción), Dropwizard (menos integraciones).
 
 **Cómo lo usamos**: `spring-boot-starter-web` (servidor embebido Tomcat), `spring-boot-starter-validation` (Jakarta Bean Validation), `spring-boot-starter-aop` (necesario para `@Retry`, `@CircuitBreaker`, `@Cacheable`), `spring-boot-starter-cache` (abstracción de caché), `spring-boot-starter-actuator` (health checks y métricas).
 
@@ -42,8 +38,6 @@
 - **Circuit Breaker**: Abre el circuito si la tasa de fallo supera un umbral, evitando cascadas.
 - **Bulkhead**: Limita el número de llamadas concurrentes, protegiendo los recursos del sistema.
 - Integración nativa con Spring Boot 3 vía `resilience4j-spring-boot3`.
-
-**Alternativas**: Hystrix (mantenimiento), Spring Cloud Circuit Breaker (wrapper, no implementación), Sentinel (menos ecosistema).
 
 **Cómo lo usamos**:
 
@@ -68,8 +62,6 @@ public List<ProductDetail> getSimilarProducts(String productId) {
 
 **Por qué Caffeine**: Es el caché en memoria de más alto rendimiento para Java. Supera a Guava Cache y Ehcache en benchmarks de throughput y latencia. Integración directa con `spring-boot-starter-cache` vía `CaffeineCacheManager`.
 
-**Alternativas**: Guava Cache (menos features de expiración), Redis (necesita infraestructura separada, overkill para single-instance), Ehcache (más pesado).
-
 **Cómo lo usamos**:
 
 ```java
@@ -88,8 +80,6 @@ Dos caches:
 **Problema**: `RestTemplate` por defecto usa `SimpleClientHttpRequestFactory` que crea una conexión por request — sin pooling, sin timeouts configurables, sin reuso de conexiones.
 
 **Por qué Apache HC5**: Es el cliente HTTP más maduro para Java. Ofrece connection pooling (reutiliza conexiones TCP), timeouts configurables (`connectTimeout`, `readTimeout`), y mejor manejo de errores HTTP.
-
-**Alternativas**: OkHttp (similar rendimiento, menos configuración), Java 11 `HttpClient` (nuevo, menos maduro en pooling), Jetty HttpClient.
 
 **Cómo lo usamos**:
 
@@ -113,8 +103,6 @@ Pool de 20 conexiones, connect timeout 2s, read timeout 5s.
 
 **Por qué SpringDoc**: Genera la especificación OpenAPI 3 automáticamente a partir de anotaciones Spring. Incluye Swagger UI para explorar y probar los endpoints desde el navegador. Es el sustituto moderno de Springfox (que dejó de mantener OpenAPI 3).
 
-**Alternativas**: Springfox (abandonado, no soporta Spring Boot 3), escribir OpenAPI YAML a mano (error-prone), REST Docs (más verboso, genera docs desde tests).
-
 **Cómo lo usamos**:
 
 ```java
@@ -130,8 +118,6 @@ Accesible en `/swagger-ui.html` y `/v3/api-docs`.
 **Problema**: Los logs en texto plano son difíciles de parsear por herramientas como Elasticsearch, Datadog o Grafana Loki. En producción necesitas logs estructurados en JSON.
 
 **Por qué Logstash Logback Encoder**: Es la librería estándar para emitir logs JSON desde Logback (el logger por defecto de Spring Boot). Incluye el MDC automáticamente en el JSON, lo que permite correlacionar logs por `correlationId`.
-
-**Alternativas**: Escribir tu propio layout JSON (reinventar la rueda), `log4j2` con JSON layout (cambiar todo el logging stack), ConsoleAppender + parseador externo (pérdida de info).
 
 **Cómo lo usamos**:
 
@@ -153,8 +139,6 @@ Cada log incluye `@timestamp`, `level`, `logger_name`, `message`, `correlationId
 
 **Por qué Micrometer**: Es la fábrica de métricas de Spring Boot. Expone métricas de JVM, caché, HTTP, y personalizadas en formato Prometheus o OpenTelemetry. Actuator añade endpoints REST para health checks, info y metrics.
 
-**Alternativas**: Dropwizard Metrics (menos integración Spring), MicroProfile Metrics (menos adopción), counters manuales (inconsistente).
-
 **Cómo lo usamos**:
 
 ```yaml
@@ -171,8 +155,6 @@ Endpoints: `/actuator/health`, `/actuator/metrics`. Health check personalizado p
 **Problema**: Sin un ID de correlación, es imposible seguir el rastro de una petición a través de logs cuando hay múltiples requests concurrentes.
 
 **Por qué esta implementación**: Un `Filter` de Jakarta Servlet intercepta cada request, extrae `X-Correlation-ID` del header (si existe) o genera un UUID, y lo inyecta en **MDC** (Mapped Diagnostic Context). Esto hace que TODOS los logs de esa petición incluyan automáticamente el correlationId sin tener que pasarlo manualmente.
-
-**Alternativas**: Spring Cloud Sleuth (deprecado, migrado a Micrometer Tracing), logs sin correlación (imposible de depurar en producción).
 
 **Cómo lo usamos**: Cada log incluye `"correlationId":"..."` en el JSON, permitiendo filtrar todos los eventos de una misma petición en Elasticsearch o Grafana.
 
@@ -210,8 +192,6 @@ Cubre 6 tipos de error: 404 (not found, product not found), 400 (bad request), 5
 - **AssertJ**: Assertions fluidas y legibles (`assertThat(result).hasSize(2).containsExactly(...)`).
 - **MockMvc**: Test de controladores sin levantar el servidor completo.
 
-**Alternativas**: TestNG (menos adopción), Hamcrest (menos legible que AssertJ), WebTestClient (requiere WebFlux).
-
 **Cómo lo usamos**:
 
 | Test | Estrategia |
@@ -229,7 +209,5 @@ Cubre 6 tipos de error: 404 (not found, product not found), 400 (bad request), 5
 **Problema**: Sin pruebas de carga, no sabes cómo se comporta la API bajo estrés ni dónde están los cuellos de botella.
 
 **Por qué k6**: Es la herramienta de load testing más moderna. Scriptable en JavaScript, integración nativa con InfluxDB para almacenar métricas y Grafana para visualizarlas. Ejecuta 200 VUs concurrentes en 5 escenarios.
-
-**Alternativas**: JMeter (interfaz gráfica pesada, menos integrable en CI), Locust (Python, menos métricas), Artillery (Node.js, menos maduro).
 
 **Cómo lo usamos**: 5 escenarios (normal, slow, verySlow, 404, error) que cubren todos los casos de la API externa. Las métricas se almacenan en InfluxDB y se visualizan en Grafana con 3 paneles: Requests, http-req-duration, VUs.
