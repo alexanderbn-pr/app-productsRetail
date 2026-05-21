@@ -1,6 +1,6 @@
 # Maven
 *target*
-
+*.md
 # Package Files 
 *.jar
 *.war

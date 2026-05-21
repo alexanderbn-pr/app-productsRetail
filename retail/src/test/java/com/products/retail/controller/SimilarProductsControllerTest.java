@@ -1,71 +1,87 @@
 package com.products.retail.controller;
 
+import com.products.retail.constant.ApiConstants;
+import com.products.retail.dto.ProductDetailResponse;
+import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import com.products.retail.service.SimilarProductsService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
+
+@WebMvcTest(SimilarProductsController.class)
 class SimilarProductsControllerTest {
 
-    @InjectMocks
-    private SimilarProductsController similarProductsController;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Mock
+    @MockBean
     private SimilarProductsService similarProductsService;
 
     @Test
-    void getSimilarProductsReturnsOk() {
+    void getSimilarProductsReturns200WithProductList() throws Exception {
         String productId = "1";
-        ProductDetail product = new ProductDetail("1", "Producto 1", 10.0, true);
-        List<ProductDetail> productList = List.of(product);
+        ProductDetail detail = new ProductDetail("1", "Producto 1", new BigDecimal("10.00"), true);
 
         when(similarProductsService.getSimilarProducts(productId))
-                .thenReturn(ResponseEntity.ok(productList));
+                .thenReturn(List.of(detail));
 
-        ResponseEntity<List<ProductDetail>> response = similarProductsController.getSimilarProducts(productId);
-
-        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assertions.assertNotNull(response.getBody());
-        Assertions.assertEquals(1, response.getBody().size());
-        Assertions.assertEquals("Producto 1", response.getBody().get(0).getName());
-        verify(similarProductsService, times(1)).getSimilarProducts(productId);
+        mockMvc.perform(get("/product/{productId}/similar", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value("1"))
+                .andExpect(jsonPath("$[0].name").value("Producto 1"))
+                .andExpect(jsonPath("$[0].price").value(10.00))
+                .andExpect(jsonPath("$[0].availability").value(true));
     }
 
     @Test
-    void getSimilarProductsReturnsNotFound() {
-        String productId = "999";
+    void getSimilarProductsReturns200WithEmptyList() throws Exception {
+        String productId = "1";
+
         when(similarProductsService.getSimilarProducts(productId))
-                .thenReturn(ResponseEntity.notFound().build());
+                .thenReturn(List.of());
 
-        ResponseEntity<List<ProductDetail>> response = similarProductsController.getSimilarProducts(productId);
-
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        Assertions.assertNull(response.getBody());
-        verify(similarProductsService, times(1)).getSimilarProducts(productId);
+        mockMvc.perform(get("/product/{productId}/similar", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    void getSimilarProductsReturnsServerError() {
+    void getSimilarProductsReturns404WhenProductNotFound() throws Exception {
+        String productId = "notfound";
+
+        when(similarProductsService.getSimilarProducts(productId))
+                .thenThrow(new ProductNotFoundException(productId));
+
+        mockMvc.perform(get("/product/{productId}/similar", productId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
+                .andExpect(jsonPath("$.detail").value("Product not found: notfound"));
+    }
+
+    @Test
+    void getSimilarProductsReturns500OnGenericError() throws Exception {
         String productId = "error";
+
         when(similarProductsService.getSimilarProducts(productId))
-                .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+                .thenThrow(new RuntimeException("Unexpected error"));
 
-        ResponseEntity<List<ProductDetail>> response = similarProductsController.getSimilarProducts(productId);
-
-        Assertions.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        Assertions.assertNull(response.getBody());
-        verify(similarProductsService, times(1)).getSimilarProducts(productId);
+        mockMvc.perform(get("/product/{productId}/similar", productId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_INTERNAL))
+                .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));
     }
 }
