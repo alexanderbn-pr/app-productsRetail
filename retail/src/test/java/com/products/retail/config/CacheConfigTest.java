@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +48,7 @@ class CacheConfigTest {
         Cache cache = cacheManager.getCache("similarIds");
         assertThat(cache).isNotNull();
 
-        ProductDetail detail = new ProductDetail("1", "cached-product", 15.0, true);
+        ProductDetail detail = new ProductDetail("1", "cached-product", new BigDecimal("15.00"), true);
         cache.put("test-key", List.of(detail));
 
         Cache.ValueWrapper wrapper = cache.get("test-key");
@@ -65,7 +66,7 @@ class CacheConfigTest {
         Cache cache = cacheManager.getCache("productDetails");
         assertThat(cache).isNotNull();
 
-        ProductDetail detail = new ProductDetail("5", "detail-cached", 99.99, true);
+        ProductDetail detail = new ProductDetail("5", "detail-cached", new BigDecimal("99.99"), true);
         cache.put("test-key", detail);
 
         Cache.ValueWrapper wrapper = cache.get("test-key");
@@ -73,7 +74,7 @@ class CacheConfigTest {
 
         ProductDetail cached = (ProductDetail) wrapper.get();
         assertThat(cached.getName()).isEqualTo("detail-cached");
-        assertThat(cached.getPrice()).isEqualTo(99.99);
+        assertThat(cached.getPrice()).isEqualByComparingTo(new BigDecimal("99.99"));
     }
 
     @Test

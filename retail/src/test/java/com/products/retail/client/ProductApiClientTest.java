@@ -1,5 +1,6 @@
 package com.products.retail.client;
 
+import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -53,7 +56,7 @@ class ProductApiClientTest {
     @Test
     void getProductDetailReturnsProductWhenFound() {
         String id = "1";
-        ProductDetail expected = new ProductDetail("1", "Product 1", 10.0, true);
+        ProductDetail expected = new ProductDetail("1", "Product 1", new BigDecimal("10.00"), true);
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/1", ProductDetail.class))
                 .thenReturn(expected);
 
@@ -86,8 +89,8 @@ class ProductApiClientTest {
     void getSimilarProductsReturnsListWhenAllDetailsFound() {
         String productId = "1";
         String[] similarIds = {"2", "3"};
-        ProductDetail detail2 = new ProductDetail("2", "Product 2", 20.0, true);
-        ProductDetail detail3 = new ProductDetail("3", "Product 3", 30.0, false);
+        ProductDetail detail2 = new ProductDetail("2", "Product 2", new BigDecimal("20.00"), true);
+        ProductDetail detail3 = new ProductDetail("3", "Product 3", new BigDecimal("30.00"), false);
 
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/1/similarids", String[].class))
                 .thenReturn(similarIds);
@@ -96,8 +99,7 @@ class ProductApiClientTest {
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/3", ProductDetail.class))
                 .thenReturn(detail3);
 
-        CompletableFuture<List<ProductDetail>> future = productApiClient.getSimilarProducts(productId);
-        List<ProductDetail> result = future.join();
+        List<ProductDetail> result = productApiClient.getSimilarProducts(productId);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getName()).isEqualTo("Product 2");
@@ -113,8 +115,7 @@ class ProductApiClientTest {
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/1/similarids", String[].class))
                 .thenReturn(null);
 
-        CompletableFuture<List<ProductDetail>> future = productApiClient.getSimilarProducts(productId);
-        List<ProductDetail> result = future.join();
+        List<ProductDetail> result = productApiClient.getSimilarProducts(productId);
 
         assertThat(result).isEmpty();
     }
@@ -125,8 +126,7 @@ class ProductApiClientTest {
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/1/similarids", String[].class))
                 .thenReturn(new String[0]);
 
-        CompletableFuture<List<ProductDetail>> future = productApiClient.getSimilarProducts(productId);
-        List<ProductDetail> result = future.join();
+        List<ProductDetail> result = productApiClient.getSimilarProducts(productId);
 
         assertThat(result).isEmpty();
     }
@@ -135,7 +135,7 @@ class ProductApiClientTest {
     void getSimilarProductsSkipsFailedDetails() {
         String productId = "1";
         String[] similarIds = {"2", "3"};
-        ProductDetail detail2 = new ProductDetail("2", "Product 2", 20.0, true);
+        ProductDetail detail2 = new ProductDetail("2", "Product 2", new BigDecimal("20.00"), true);
 
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/1/similarids", String[].class))
                 .thenReturn(similarIds);
@@ -144,10 +144,20 @@ class ProductApiClientTest {
         when(restTemplate.getForObject(MOCK_BASE_URL + "/product/3", ProductDetail.class))
                 .thenThrow(new RuntimeException("API error"));
 
-        CompletableFuture<List<ProductDetail>> future = productApiClient.getSimilarProducts(productId);
-        List<ProductDetail> result = future.join();
+        List<ProductDetail> result = productApiClient.getSimilarProducts(productId);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo("2");
+    }
+
+    @Test
+    void getSimilarProductsThrowsProductNotFoundOn404() {
+        String productId = "999";
+        when(restTemplate.getForObject(MOCK_BASE_URL + "/product/999/similarids", String[].class))
+                .thenThrow(HttpClientErrorException.NotFound.class);
+
+        assertThatThrownBy(() -> productApiClient.getSimilarProducts(productId))
+                .isInstanceOf(ProductNotFoundException.class)
+                .hasMessageContaining("999");
     }
 }

@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.products.retail.exception.ProductNotFoundException;
+import org.springframework.web.client.HttpClientErrorException;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -20,14 +23,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * HTTP client for the external product API.
  * <p>
- * Provides asynchronous methods for fetching product details and
- * similar product lists using {@link CompletableFuture} with a bounded
- * thread pool. Individual detail fetches timeout after 3 seconds;
- * the entire similar-products batch timeout is 5 seconds.
- * <p>
- * Failed individual detail fetches are logged and skipped (returning
- * {@code null}) so that a partial failure does not collapse the entire
- * similar-products response.
+ * Fetches product details in parallel via {@link CompletableFuture} with a
+ * bounded thread pool. Individual fetches timeout after 3 seconds and
+ * failures are logged and skipped so a single failure does not collapse
+ * the entire batch response.
  */
 @Service
 public class ProductApiClient {
@@ -41,16 +40,6 @@ public class ProductApiClient {
     private final ExecutorService executor;
     private final String mocksBaseUrl;
 
-    /**
-     * Constructs the client with Spring-managed dependencies.
-     * Creates a bounded thread pool from application properties.
-     *
-     * @param restTemplate   the HTTP client
-     * @param mocksBaseUrl   base URL of the external product API
-     * @param corePoolSize   core thread pool size
-     * @param maxPoolSize    maximum thread pool size
-     * @param queueCapacity  capacity of the work queue
-     */
     @Autowired
     public ProductApiClient(
             RestTemplate restTemplate,
@@ -70,29 +59,14 @@ public class ProductApiClient {
                 corePoolSize, maxPoolSize, queueCapacity);
     }
 
-    /**
-     * Package-private constructor for testing that accepts an explicit executor.
-     *
-     * @param restTemplate the HTTP client
-     * @param executor     the executor for async operations
-     * @param mocksBaseUrl base URL of the external product API
-     */
+    /** Package-private for testing with explicit executor. */
     ProductApiClient(RestTemplate restTemplate, ExecutorService executor, String mocksBaseUrl) {
         this.restTemplate = restTemplate;
         this.executor = executor;
         this.mocksBaseUrl = mocksBaseUrl;
     }
 
-    /**
-     * Fetches the detail of a single product by its ID asynchronously.
-     * <p>
-     * The returned future completes exceptionally with a
-     * {@link java.util.concurrent.TimeoutException} if the HTTP call
-     * does not complete within 3 seconds.
-     *
-     * @param id the product ID
-     * @return a future that completes with the {@link ProductDetail}
-     */
+    /** @return future that times out after 3 seconds */
     public CompletableFuture<ProductDetail> getProductDetail(String id) {
         log.info("fetching_product_detail id={}", id);
         return CompletableFuture
@@ -105,32 +79,29 @@ public class ProductApiClient {
     }
 
     /**
-     * Fetches the list of similar product details for a given product ID.
-     * <p>
-     * First obtains the array of similar IDs from the API, then fans out
-     * parallel detail fetches via {@link #getProductDetail(String)}.
-     * Failed individual fetches are skipped.
-     *
      * @param productId the base product ID
-     * @return a future that completes with the list of {@link ProductDetail}
+     * @return similar products (never {@code null})
+     * @throws ProductNotFoundException if upstream returns 404
      */
-    public CompletableFuture<List<ProductDetail>> getSimilarProducts(String productId) {
+    public List<ProductDetail> getSimilarProducts(String productId) {
         log.info("fetching_similar_products productId={}", productId);
-        return CompletableFuture
-                .supplyAsync(() -> {
-                    String idsUrl = mocksBaseUrl + "/product/" + productId + "/similarids";
-                    log.debug("calling_product_api url={}", idsUrl);
-                    String[] similarIds = restTemplate.getForObject(idsUrl, String[].class);
+        try {
+            String idsUrl = mocksBaseUrl + "/product/" + productId + "/similarids";
+            log.debug("calling_product_api url={}", idsUrl);
+            String[] similarIds = restTemplate.getForObject(idsUrl, String[].class);
 
-                    if (similarIds == null || similarIds.length == 0) {
-                        log.info("no_similar_ids_found productId={}", productId);
-                        return List.<ProductDetail>of();
-                    }
+            if (similarIds == null || similarIds.length == 0) {
+                log.info("no_similar_ids_found productId={}", productId);
+                return List.of();
+            }
 
-                    log.info("fetched_similar_ids productId={} count={}", productId, similarIds.length);
-                    return fetchAllDetailsInParallel(similarIds);
-                }, executor)
-                .orTimeout(BATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            log.info("fetched_similar_ids productId={} count={}", productId, similarIds.length);
+            return fetchAllDetailsInParallel(similarIds);
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("product_not_found productId={}", productId);
+            throw new ProductNotFoundException(productId);
+        }
     }
 
     /**

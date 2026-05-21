@@ -14,17 +14,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * Configuration for the HTTP client layer.
- * <p>
- * Provides a fully-configured {@link RestTemplate} backed by Apache HttpClient 5
- * with connection pooling, connect and read timeouts, and automatic
- * stale connection eviction.
- * <p>
- * The {@code @Primary} annotation resolves the conflict with the
- * default {@code RestTemplate} bean defined in {@code App.java}
- * which will be removed in a future PR.
- */
 @Configuration
 public class RestTemplateConfig {
 
@@ -34,13 +23,6 @@ public class RestTemplateConfig {
     private final int connectTimeoutSeconds;
     private final int readTimeoutSeconds;
 
-    /**
-     * Constructs the configuration with values from application properties.
-     *
-     * @param maxTotal             maximum total connections in the pool
-     * @param connectTimeoutMillis connect timeout in milliseconds
-     * @param readTimeoutMillis    read/socket timeout in milliseconds
-     */
     public RestTemplateConfig(
             @Value("${httpclient.connection-pool.max-total:20}") int maxTotal,
             @Value("${httpclient.timeout.connect:2s}") String connectTimeout,
@@ -80,12 +62,7 @@ public class RestTemplateConfig {
         return new RestTemplate(factory);
     }
 
-    /**
-     * Parses a duration string like {@code "2s"} or {@code "500ms"} into seconds.
-     *
-     * @param duration the duration string
-     * @return the number of seconds, minimum 1
-     */
+    /** Parses {@code "2s"} or {@code "500ms"} into seconds (min 1). */
     private static int parseSeconds(String duration) {
         duration = duration.trim().toLowerCase();
         if (duration.endsWith("ms")) {
