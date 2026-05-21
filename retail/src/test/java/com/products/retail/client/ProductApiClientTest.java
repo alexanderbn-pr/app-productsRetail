@@ -1,5 +1,7 @@
 package com.products.retail.client;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.products.retail.constant.ApiConstants;
 import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import org.junit.jupiter.api.AfterEach;
@@ -8,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +50,16 @@ class ProductApiClientTest {
     void setUp() {
         // Use 3 threads: 1 for outer supplyAsync + up to 2 for inner getProductDetail futures
         executor = Executors.newFixedThreadPool(3);
-        productApiClient = new ProductApiClient(restTemplate, executor, MOCK_BASE_URL);
+
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        cacheManager.registerCustomCache(ApiConstants.CACHE_PRODUCT_DETAILS,
+                Caffeine.newBuilder()
+                        .recordStats()
+                        .expireAfterWrite(5, java.util.concurrent.TimeUnit.MINUTES)
+                        .maximumSize(10_000)
+                        .build());
+
+        productApiClient = new ProductApiClient(restTemplate, executor, MOCK_BASE_URL, cacheManager);
     }
 
     @AfterEach

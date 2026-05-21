@@ -1,9 +1,12 @@
 package com.products.retail.config;
 
+import com.products.retail.exception.ProductNotFoundException;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.common.bulkhead.configuration.BulkheadConfigCustomizer;
 import io.github.resilience4j.common.circuitbreaker.configuration.CircuitBreakerConfigCustomizer;
+import io.github.resilience4j.common.retry.configuration.RetryConfigCustomizer;
+import io.github.resilience4j.retry.RetryConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -48,6 +51,21 @@ public class ResilienceConfig {
             @Override
             public String name() {
                 return "similarProductsBulkhead";
+            }
+        };
+    }
+
+    @Bean
+    public RetryConfigCustomizer similarProductsRetryCustomizer() {
+        return new RetryConfigCustomizer() {
+            @Override
+            public void customize(RetryConfig.Builder builder) {
+                builder.ignoreExceptions(ProductNotFoundException.class);
+            }
+
+            @Override
+            public String name() {
+                return "similarProductsRetry";
             }
         };
     }

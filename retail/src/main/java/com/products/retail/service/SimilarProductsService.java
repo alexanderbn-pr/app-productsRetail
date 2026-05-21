@@ -42,16 +42,23 @@ public class SimilarProductsService {
     @Cacheable(ApiConstants.CACHE_SIMILAR_IDS)
     @CircuitBreaker(name = "similarProducts", fallbackMethod = "fallbackSimilarProducts")
     @Bulkhead(name = "similarProductsBulkhead")
-    @Retry(name = "similarProductsRetry", fallbackMethod = "fallbackSimilarProducts")
+    @Retry(name = "similarProductsRetry")
     public List<ProductDetail> getSimilarProducts(String productId) {
         log.info("get_similar_products productId={}", productId);
         return productApiClient.getSimilarProducts(productId);
     }
 
     /**
-     * Resilience4j fallback — returns empty list for graceful degradation.
+     * Resilience4j fallback — returns empty list for transient errors.
+     * <p>
+     * {@link ProductNotFoundException} is rethrown so it propagates to
+     * {@link com.products.retail.exception.GlobalExceptionHandler GlobalExceptionHandler}
+     * and produces a 404 response instead of a misleading empty 200.
      */
     public List<ProductDetail> fallbackSimilarProducts(String productId, Exception ex) {
+        if (ex instanceof ProductNotFoundException) {
+            throw (ProductNotFoundException) ex;
+        }
         log.warn("fallback_similar_products productId={} error={}", productId, ex.getMessage());
         return List.of();
     }

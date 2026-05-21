@@ -1,16 +1,17 @@
 package com.products.retail.client;
 
+import com.products.retail.constant.ApiConstants;
+import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.products.retail.constant.ApiConstants;
-import com.products.retail.exception.ProductNotFoundException;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,15 +38,18 @@ public class ProductApiClient {
     private final RestTemplate restTemplate;
     private final ExecutorService executor;
     private final String mocksBaseUrl;
+    private final CacheManager cacheManager;
 
     @Autowired
     public ProductApiClient(
             RestTemplate restTemplate,
+            CacheManager cacheManager,
             @Value("${mocks.base.url}") String mocksBaseUrl,
             @Value("${app.thread-pool.core-size:5}") int corePoolSize,
             @Value("${app.thread-pool.max-size:10}") int maxPoolSize,
             @Value("${app.thread-pool.queue-capacity:50}") int queueCapacity) {
         this.restTemplate = restTemplate;
+        this.cacheManager = cacheManager;
         this.mocksBaseUrl = mocksBaseUrl;
         this.executor = new ThreadPoolExecutor(
                 corePoolSize,
@@ -58,20 +62,32 @@ public class ProductApiClient {
     }
 
     /** Package-private for testing with explicit executor. */
-    ProductApiClient(RestTemplate restTemplate, ExecutorService executor, String mocksBaseUrl) {
+    ProductApiClient(RestTemplate restTemplate, ExecutorService executor, String mocksBaseUrl, CacheManager cacheManager) {
         this.restTemplate = restTemplate;
         this.executor = executor;
         this.mocksBaseUrl = mocksBaseUrl;
+        this.cacheManager = cacheManager;
     }
 
     /** @return future that times out after 3 seconds */
     public CompletableFuture<ProductDetail> getProductDetail(String id) {
         log.info("fetching_product_detail id={}", id);
+
+        Cache cache = cacheManager.getCache(ApiConstants.CACHE_PRODUCT_DETAILS);
+        ProductDetail cached = cache.get(id, ProductDetail.class);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(cached);
+        }
+
         return CompletableFuture
                 .supplyAsync(() -> {
                     String url = mocksBaseUrl + "/product/" + id;
                     log.debug("calling_product_api url={}", url);
-                    return restTemplate.getForObject(url, ProductDetail.class);
+                    ProductDetail detail = restTemplate.getForObject(url, ProductDetail.class);
+                    if (detail != null) {
+                        cache.put(id, detail);
+                    }
+                    return detail;
                 }, executor)
                 .orTimeout(ApiConstants.DETAIL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
