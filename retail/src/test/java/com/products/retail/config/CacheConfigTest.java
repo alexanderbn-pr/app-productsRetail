@@ -13,12 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Integration tests for {@link CacheConfig}.
- * <p>
- * Verifies that the Caffeine cache manager is correctly configured
- * with both named caches and that caching behavior works end-to-end.
- */
+
 @SpringBootTest
 class CacheConfigTest {
 

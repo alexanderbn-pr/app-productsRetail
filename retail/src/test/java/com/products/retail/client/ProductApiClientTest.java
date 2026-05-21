@@ -29,12 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Unit tests for {@link ProductApiClient}.
- * <p>
- * Tests async behavior, timeout handling, and error propagation
- * for both single and parallel detail fetching.
- */
+
 @ExtendWith(MockitoExtension.class)
 class ProductApiClientTest {
 

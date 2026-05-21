@@ -20,18 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Full-context integration test for {@link SimilarProductsController}.
- * <p>
- * Loads the entire Spring application context but mocks the external
- * {@link ProductApiClient} to avoid real HTTP calls. Verifies that:
- * <ul>
- *   <li>the product endpoint returns correct JSON structure</li>
- *   <li>actuator health reports UP</li>
- *   <li>Swagger UI redirects to the API docs page</li>
- *   <li>OpenAPI /v3/api-docs returns a valid spec document</li>
- * </ul>
- */
+
 @SpringBootTest
 @AutoConfigureMockMvc
 class SimilarProductsControllerIntegrationTest {

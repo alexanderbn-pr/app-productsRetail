@@ -16,12 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-/**
- * Unit tests for {@link SimilarProductsService}.
- * <p>
- * Verifies delegation to {@link ProductApiClient}, exception propagation,
- * and fallback behavior. Cache behavior is tested via integration tests.
- */
+
 @ExtendWith(MockitoExtension.class)
 class SimilarProductsServiceTest {
 

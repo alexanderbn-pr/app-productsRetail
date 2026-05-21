@@ -1,14 +1,8 @@
 package com.products.retail.constant;
 
-/**
- * Central constants for the Retail Products API.
- * Single source of truth for cache names, error codes, HTTP headers,
- * and timeout values used across the application and its tests.
- */
 public final class ApiConstants {
 
     private ApiConstants() {
-        // utility class
     }
 
     public static final String CACHE_SIMILAR_IDS = "similarIds";

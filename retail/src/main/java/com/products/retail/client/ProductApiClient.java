@@ -1,12 +1,13 @@
 package com.products.retail.client;
 
+import com.products.retail.config.MocksProperties;
+import com.products.retail.config.ThreadPoolProperties;
 import com.products.retail.constant.ApiConstants;
 import com.products.retail.exception.ProductNotFoundException;
 import com.products.retail.model.ProductDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,8 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Fetches product details in parallel via {@link CompletableFuture} with a
  * bounded thread pool. Individual fetches timeout after 3 seconds and
- * failures are logged and skipped so a single failure does not collapse
- * the entire batch response.
+ * failures are logged and skipped so a single timeout does not collapse
+ * the entire batch.
  */
 @Service
 public class ProductApiClient {
@@ -44,21 +45,20 @@ public class ProductApiClient {
     public ProductApiClient(
             RestTemplate restTemplate,
             CacheManager cacheManager,
-            @Value("${mocks.base.url}") String mocksBaseUrl,
-            @Value("${app.thread-pool.core-size:5}") int corePoolSize,
-            @Value("${app.thread-pool.max-size:10}") int maxPoolSize,
-            @Value("${app.thread-pool.queue-capacity:50}") int queueCapacity) {
+            MocksProperties mocksProperties,
+            ThreadPoolProperties threadPoolProperties) {
         this.restTemplate = restTemplate;
         this.cacheManager = cacheManager;
-        this.mocksBaseUrl = mocksBaseUrl;
+        this.mocksBaseUrl = mocksProperties.base().url();
         this.executor = new ThreadPoolExecutor(
-                corePoolSize,
-                maxPoolSize,
+                threadPoolProperties.coreSize(),
+                threadPoolProperties.maxSize(),
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(queueCapacity),
+                new LinkedBlockingQueue<>(threadPoolProperties.queueCapacity()),
                 new ThreadPoolExecutor.CallerRunsPolicy());
         log.info("product_api_client_initialized pool={}/{} queue={}",
-                corePoolSize, maxPoolSize, queueCapacity);
+                threadPoolProperties.coreSize(), threadPoolProperties.maxSize(),
+                threadPoolProperties.queueCapacity());
     }
 
     /** Package-private for testing with explicit executor. */
@@ -69,7 +69,6 @@ public class ProductApiClient {
         this.cacheManager = cacheManager;
     }
 
-    /** @return future that times out after 3 seconds */
     public CompletableFuture<ProductDetail> getProductDetail(String id) {
         log.info("fetching_product_detail id={}", id);
 
@@ -95,7 +94,7 @@ public class ProductApiClient {
     /**
      * @param productId the base product ID
      * @return similar products (never {@code null})
-     * @throws ProductNotFoundException if upstream returns 404
+     * @throws ProductNotFoundException if the upstream API returns 404
      */
     public List<ProductDetail> getSimilarProducts(String productId) {
         log.info("fetching_similar_products productId={}", productId);
@@ -118,15 +117,6 @@ public class ProductApiClient {
         }
     }
 
-    /**
-     * Fetches all product details in parallel using {@link CompletableFuture#allOf}.
-     * <p>
-     * Each fetch is wrapped with an {@code exceptionally} handler so that
-     * individual failures produce {@code null} instead of collapsing the batch.
-     *
-     * @param ids the product IDs to fetch
-     * @return the list of successfully fetched details (never {@code null})
-     */
     private List<ProductDetail> fetchAllDetailsInParallel(String[] ids) {
         List<CompletableFuture<ProductDetail>> futures = Arrays.stream(ids)
                 .map(id -> getProductDetail(id)

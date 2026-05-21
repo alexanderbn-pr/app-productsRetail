@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/** Deserialized from the external API — mutable (Lombok) for Jackson. */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

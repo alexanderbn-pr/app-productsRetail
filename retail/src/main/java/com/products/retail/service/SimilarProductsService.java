@@ -15,9 +15,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Retrieves similar products. Pure orchestration layer — delegates
- * HTTP to {@link ProductApiClient}, resilience to annotations, and
- * errors to {@link com.products.retail.exception.GlobalExceptionHandler}.
+ * Pure orchestration layer — delegates HTTP to {@link ProductApiClient},
+ * resilience to annotations, and errors to
+ * {@link com.products.retail.exception.GlobalExceptionHandler}.
  */
 @Service
 public class SimilarProductsService {
@@ -26,19 +26,10 @@ public class SimilarProductsService {
 
     private final ProductApiClient productApiClient;
 
-    /**
-     * Constructs the service with the required HTTP client.
-     *
-     * @param productApiClient the HTTP client for the external product API
-     */
     public SimilarProductsService(ProductApiClient productApiClient) {
         this.productApiClient = productApiClient;
     }
 
-    /**
-     * @param productId the base product ID
-     * @return similar products list (never {@code null})
-     */
     @Cacheable(ApiConstants.CACHE_SIMILAR_IDS)
     @CircuitBreaker(name = "similarProducts", fallbackMethod = "fallbackSimilarProducts")
     @Bulkhead(name = "similarProductsBulkhead")

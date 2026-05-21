@@ -1,8 +1,8 @@
 package com.products.retail.health;
 
+import com.products.retail.config.MocksProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -16,10 +16,9 @@ public class ExternalApiHealthIndicator implements HealthIndicator {
     private final RestTemplate restTemplate;
     private final String mocksBaseUrl;
 
-    public ExternalApiHealthIndicator(RestTemplate restTemplate,
-                                      @Value("${mocks.base.url}") String mocksBaseUrl) {
+    public ExternalApiHealthIndicator(RestTemplate restTemplate, MocksProperties mocksProperties) {
         this.restTemplate = restTemplate;
-        this.mocksBaseUrl = mocksBaseUrl;
+        this.mocksBaseUrl = mocksProperties.base().url();
     }
 
     @Override

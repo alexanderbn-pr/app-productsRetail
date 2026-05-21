@@ -40,31 +40,18 @@ class RetailApplicationTest {
 
     @Test
     void applicationContextLoadsWithAllCoreBeans() {
-        assertThat(similarProductsService)
-                .as("SimilarProductsService bean should be created by @Service scanning")
-                .isNotNull();
-        assertThat(productApiClient)
-                .as("ProductApiClient bean should be created by @Service scanning")
-                .isNotNull();
-        assertThat(cacheManager)
-                .as("CacheManager bean should be created by CacheConfig")
-                .isNotNull();
-        assertThat(restTemplate)
-                .as("RestTemplate bean should be created by RestTemplateConfig")
-                .isNotNull();
-        assertThat(globalExceptionHandler)
-                .as("GlobalExceptionHandler bean should be created by @RestControllerAdvice")
-                .isNotNull();
+        assertThat(similarProductsService).isNotNull();
+        assertThat(productApiClient).isNotNull();
+        assertThat(cacheManager).isNotNull();
+        assertThat(restTemplate).isNotNull();
+        assertThat(globalExceptionHandler).isNotNull();
     }
 
     @Test
     void cacheManagerIsCaffeineBasedWithExpectedCaches() {
-        assertThat(cacheManager)
-                .as("CacheManager must be a CaffeineCacheManager instance")
-                .isInstanceOf(CaffeineCacheManager.class);
+        assertThat(cacheManager).isInstanceOf(CaffeineCacheManager.class);
 
         assertThat(cacheManager.getCacheNames())
-                .as("CaffeineCacheManager should register both named caches")
                 .hasSize(2)
                 .containsExactlyInAnyOrder(ApiConstants.CACHE_SIMILAR_IDS, ApiConstants.CACHE_PRODUCT_DETAILS);
     }

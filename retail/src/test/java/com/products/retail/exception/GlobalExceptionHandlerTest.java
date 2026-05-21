@@ -1,7 +1,6 @@
 package com.products.retail.exception;
 
 import com.products.retail.constant.ApiConstants;
-import com.products.retail.dto.ErrorResponse;
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>
  * Uses MockMvc standalone setup with a test controller that throws
  * each handled exception type to verify HTTP status mapping and
- * {@link ErrorResponse} body format.
+ * {@link org.springframework.http.ProblemDetail ProblemDetail} body format.
  */
 class GlobalExceptionHandlerTest {
 
@@ -44,55 +42,56 @@ class GlobalExceptionHandlerTest {
     void productNotFoundExceptionReturns404() throws Exception {
         mockMvc.perform(get("/test/product-not-found"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("Product not found: missing-id"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
+                .andExpect(jsonPath("$.detail").value("Product not found: missing-id"))
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void illegalArgumentExceptionReturns400() throws Exception {
         mockMvc.perform(get("/test/illegal-argument"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_BAD_REQUEST))
-                .andExpect(jsonPath("$.message").value("Invalid product ID"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_BAD_REQUEST))
+                .andExpect(jsonPath("$.detail").value("Invalid product ID"))
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
     void httpClientErrorNotFoundReturns404() throws Exception {
         mockMvc.perform(get("/test/http-not-found"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_NOT_FOUND))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_NOT_FOUND))
+                .andExpect(jsonPath("$.detail").value("404 Not Found"))
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void callNotPermittedExceptionReturns503() throws Exception {
         mockMvc.perform(get("/test/circuit-breaker"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_SERVICE_UNAVAILABLE))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_SERVICE_UNAVAILABLE))
+                .andExpect(jsonPath("$.detail").value("Service temporarily unavailable"))
+                .andExpect(jsonPath("$.status").value(503));
     }
 
     @Test
     void bulkheadFullExceptionReturns429() throws Exception {
         mockMvc.perform(get("/test/bulkhead-full"))
                 .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_TOO_MANY_REQUESTS))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_TOO_MANY_REQUESTS))
+                .andExpect(jsonPath("$.detail").value("Too many concurrent requests"))
+                .andExpect(jsonPath("$.status").value(429));
     }
 
     @Test
     void genericExceptionReturns500() throws Exception {
         mockMvc.perform(get("/test/generic-error"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_INTERNAL))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_INTERNAL))
+                .andExpect(jsonPath("$.detail").value("An unexpected error occurred"))
+                .andExpect(jsonPath("$.status").value(500));
     }
 
-    /**
-     * Test controller that throws each handled exception type on specific endpoints.
-     */
     @RestController
     static class ExceptionThrowingController {
 

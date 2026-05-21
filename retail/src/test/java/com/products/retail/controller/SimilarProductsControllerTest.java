@@ -20,14 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Web-layer tests for {@link SimilarProductsController}.
- * <p>
- * Uses {@link WebMvcTest @WebMvcTest} to load only the controller and
- * its {@link com.products.retail.exception.GlobalExceptionHandler GlobalExceptionHandler}.
- * The {@link SimilarProductsService} is mocked to isolate HTTP
- * serialisation, DTO mapping, and error-response formatting.
- */
+
 @WebMvcTest(SimilarProductsController.class)
 class SimilarProductsControllerTest {
 
@@ -75,8 +68,8 @@ class SimilarProductsControllerTest {
 
         mockMvc.perform(get("/product/{productId}/similar", productId))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("Product not found: notfound"));
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_PRODUCT_NOT_FOUND))
+                .andExpect(jsonPath("$.detail").value("Product not found: notfound"));
     }
 
     @Test
@@ -88,7 +81,7 @@ class SimilarProductsControllerTest {
 
         mockMvc.perform(get("/product/{productId}/similar", productId))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value(ApiConstants.ERROR_INTERNAL))
-                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
+                .andExpect(jsonPath("$.title").value(ApiConstants.ERROR_INTERNAL))
+                .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));
     }
 }
