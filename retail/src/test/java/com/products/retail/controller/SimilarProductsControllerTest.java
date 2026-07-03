@@ -3,6 +3,7 @@ package com.products.retail.controller;
 import com.products.retail.constant.ApiConstants;
 import com.products.retail.dto.ProductDetailResponse;
 import com.products.retail.exception.ProductNotFoundException;
+import com.products.retail.mapper.ProductDetailMapper;
 import com.products.retail.model.ProductDetail;
 import com.products.retail.service.SimilarProductsService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -30,6 +32,9 @@ class SimilarProductsControllerTest {
     @MockBean
     private SimilarProductsService similarProductsService;
 
+    @MockBean
+    private ProductDetailMapper productDetailMapper;
+
     @Test
     void getSimilarProductsReturns200WithProductList() throws Exception {
         String productId = "1";
@@ -37,6 +42,11 @@ class SimilarProductsControllerTest {
 
         when(similarProductsService.getSimilarProducts(productId))
                 .thenReturn(List.of(detail));
+        when(productDetailMapper.toResponse(any(ProductDetail.class)))
+                .thenAnswer(invocation -> {
+                    ProductDetail d = invocation.getArgument(0);
+                    return new ProductDetailResponse(d.getId(), d.getName(), d.getPrice(), d.isAvailability());
+                });
 
         mockMvc.perform(get("/product/{productId}/similar", productId))
                 .andExpect(status().isOk())

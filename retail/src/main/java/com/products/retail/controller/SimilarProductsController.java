@@ -1,6 +1,7 @@
 package com.products.retail.controller;
 
 import com.products.retail.dto.ProductDetailResponse;
+import com.products.retail.mapper.ProductDetailMapper;
 import com.products.retail.service.SimilarProductsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -26,9 +27,11 @@ import java.util.List;
 public class SimilarProductsController {
 
     private final SimilarProductsService similarProductsService;
+    private final ProductDetailMapper productDetailMapper;
 
-    public SimilarProductsController(SimilarProductsService similarProductsService) {
+    public SimilarProductsController(SimilarProductsService similarProductsService, ProductDetailMapper productDetailMapper) {
         this.similarProductsService = similarProductsService;
+        this.productDetailMapper = productDetailMapper;
     }
 
     @GetMapping("/{productId}/similar")
@@ -39,7 +42,7 @@ public class SimilarProductsController {
     public ResponseEntity<List<ProductDetailResponse>> getSimilarProducts(@PathVariable String productId) {
         var details = similarProductsService.getSimilarProducts(productId);
         var response = details.stream()
-                .map(ProductDetailResponse::from)
+                .map(productDetailMapper::toProductDetailResponse)
                 .toList();
         return ResponseEntity.ok(response);
     }
