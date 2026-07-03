@@ -80,24 +80,19 @@ Los resultados se almacenan en InfluxDB y se visualizan en Grafana.
 
 ## Arquitectura
 
-El proyecto sigue una **arquitectura limpia por capas**:
+El proyecto sigue una **arquitectura hexagonal (Puertos y Adaptadores)**:
 
 ```
-Controller → Service → Client (HTTP externo)
-     │           │
-     │           └── Caché (Caffeine)
-     │
-     └── Error handling → GlobalExceptionHandler (ProblemDetail RFC 7807)
+dominio (domain) → aplicación (application) → infraestructura (infrastructure)
 ```
 
 ### Capas
 
 | Capa | Responsabilidad | Tecnología |
 |------|----------------|------------|
-| **Controller** | Validación de entrada, mapeo a DTOs de respuesta | Spring MVC `@RestController` |
-| **Service** | Orquestación, resiliencia, caché | Spring `@Service`, Resilience4j, `@Cacheable` |
-| **Client** | Comunicación HTTP con API externa, fetching paralelo | Apache HttpClient 5, `CompletableFuture` |
-| **Exception Handler** | Mapeo de excepciones a respuestas HTTP estructuradas | `@RestControllerAdvice`, `ProblemDetail` |
+| **domain** | Entidades del negocio, excepciones de dominio | POJOs / records, Java exceptions |
+| **application** | Casos de uso, puertos (inbound/outbound), mappers y DTOs | Spring `@Service`, `@Cacheable`, Resilience4j, MapStruct |
+| **infrastructure** | Adaptadores REST, HTTP client, caché, configuración, manejo de errores | Spring MVC `@RestController`, Apache HttpClient 5, Caffeine, `@RestControllerAdvice` |
 
 ## Tests
 
