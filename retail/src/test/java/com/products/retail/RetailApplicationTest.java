@@ -1,9 +1,9 @@
 package com.products.retail;
 
-import com.products.retail.client.ProductApiClient;
-import com.products.retail.constant.ApiConstants;
-import com.products.retail.exception.GlobalExceptionHandler;
-import com.products.retail.service.SimilarProductsService;
+import com.products.retail.application.service.SimilarProductsService;
+import com.products.retail.infrastructure.adapter.outbound.ProductHttpAdapter;
+import com.products.retail.infrastructure.constant.InfrastructureConstants;
+import com.products.retail.infrastructure.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +27,7 @@ class RetailApplicationTest {
     private SimilarProductsService similarProductsService;
 
     @Autowired(required = false)
-    private ProductApiClient productApiClient;
+    private ProductHttpAdapter productHttpAdapter;
 
     @Autowired(required = false)
     private CacheManager cacheManager;
@@ -41,7 +41,7 @@ class RetailApplicationTest {
     @Test
     void applicationContextLoadsWithAllCoreBeans() {
         assertThat(similarProductsService).isNotNull();
-        assertThat(productApiClient).isNotNull();
+        assertThat(productHttpAdapter).isNotNull();
         assertThat(cacheManager).isNotNull();
         assertThat(restTemplate).isNotNull();
         assertThat(globalExceptionHandler).isNotNull();
@@ -53,6 +53,6 @@ class RetailApplicationTest {
 
         assertThat(cacheManager.getCacheNames())
                 .hasSize(2)
-                .containsExactlyInAnyOrder(ApiConstants.CACHE_SIMILAR_IDS, ApiConstants.CACHE_PRODUCT_DETAILS);
+                .containsExactlyInAnyOrder(InfrastructureConstants.CACHE_SIMILAR_IDS, InfrastructureConstants.CACHE_PRODUCT_DETAILS);
     }
 }
