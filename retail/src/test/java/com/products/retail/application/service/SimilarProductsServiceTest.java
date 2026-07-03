@@ -5,6 +5,7 @@ import com.products.retail.application.mapper.ProductDetailMapper;
 import com.products.retail.application.port.outbound.ProductRepository;
 import com.products.retail.domain.exception.ProductNotFoundException;
 import com.products.retail.domain.model.ProductDetail;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,6 +34,14 @@ class SimilarProductsServiceTest {
     private SimilarProductsService similarProductsService;
 
     @Test
+    void getSimilarProductsShouldBeAnnotatedWithRateLimiter() throws Exception {
+        var method = SimilarProductsService.class.getMethod("getSimilarProducts", String.class);
+        var annotation = method.getAnnotation(RateLimiter.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.name()).isEqualTo("similarProducts");
+    }
+
+    @Test
     void getSimilarProductsReturnsListWithProductDetails() {
         String productId = "1";
         ProductDetail product2 = new ProductDetail("2", "Producto 2", new BigDecimal("20.00"), true);
@@ -44,7 +53,7 @@ class SimilarProductsServiceTest {
         when(productDetailMapper.toProductDetailResponse(any(ProductDetail.class)))
                 .thenAnswer(invocation -> {
                     ProductDetail d = invocation.getArgument(0);
-                    return new ProductDetailResponse(d.getId(), d.getName(), d.getPrice(), d.isAvailability());
+                    return new ProductDetailResponse(d.id(), d.name(), d.price(), d.availability());
                 });
 
         List<ProductDetailResponse> result = similarProductsService.getSimilarProducts(productId);

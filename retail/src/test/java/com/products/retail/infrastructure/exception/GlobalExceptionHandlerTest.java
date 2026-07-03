@@ -8,6 +8,8 @@ import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -85,6 +87,15 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void requestNotPermittedExceptionReturns429() throws Exception {
+        mockMvc.perform(get("/test/rate-limited"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.title").value(ApplicationConstants.ERROR_RATE_LIMITED))
+                .andExpect(jsonPath("$.detail").value("Rate limit exceeded. Please try again later."))
+                .andExpect(jsonPath("$.status").value(429));
+    }
+
+    @Test
     void genericExceptionReturns500() throws Exception {
         mockMvc.perform(get("/test/generic-error"))
                 .andExpect(status().isInternalServerError())
@@ -122,6 +133,12 @@ class GlobalExceptionHandlerTest {
         void throwBulkheadFull() {
             throw BulkheadFullException.createBulkheadFullException(
                     Bulkhead.of("test", BulkheadConfig.ofDefaults()));
+        }
+
+        @GetMapping("/test/rate-limited")
+        void throwRateLimited() {
+            throw RequestNotPermitted.createRequestNotPermitted(
+                    RateLimiter.ofDefaults("test"));
         }
 
         @GetMapping("/test/generic-error")

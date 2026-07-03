@@ -10,5 +10,6 @@ public final class ApplicationConstants {
     public static final String ERROR_NOT_FOUND = "NOT_FOUND";
     public static final String ERROR_SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE";
     public static final String ERROR_TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
+    public static final String ERROR_RATE_LIMITED = "RATE_LIMITED";
     public static final String ERROR_INTERNAL = "INTERNAL_ERROR";
 }

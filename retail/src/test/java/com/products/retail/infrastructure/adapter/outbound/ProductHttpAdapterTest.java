@@ -72,8 +72,8 @@ class ProductHttpAdapterTest {
         ProductDetail result = productHttpAdapter.getProductDetail(id);
 
         assertThat(result).isEqualTo(expected);
-        assertThat(result.getId()).isEqualTo("1");
-        assertThat(result.getName()).isEqualTo("Product 1");
+        assertThat(result.id()).isEqualTo("1");
+        assertThat(result.name()).isEqualTo("Product 1");
         verify(restTemplate).getForObject(MOCK_BASE_URL + "/product/1", ProductDetail.class);
     }
 
@@ -108,8 +108,8 @@ class ProductHttpAdapterTest {
         List<ProductDetail> result = productHttpAdapter.getSimilarProducts(productId);
 
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).getName()).isEqualTo("Product 2");
-        assertThat(result.get(1).getName()).isEqualTo("Product 3");
+        assertThat(result.get(0).name()).isEqualTo("Product 2");
+        assertThat(result.get(1).name()).isEqualTo("Product 3");
         verify(restTemplate).getForObject(MOCK_BASE_URL + "/product/1/similarids", String[].class);
         verify(restTemplate).getForObject(MOCK_BASE_URL + "/product/2", ProductDetail.class);
         verify(restTemplate).getForObject(MOCK_BASE_URL + "/product/3", ProductDetail.class);
@@ -153,7 +153,7 @@ class ProductHttpAdapterTest {
         List<ProductDetail> result = productHttpAdapter.getSimilarProducts(productId);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo("2");
+        assertThat(result.get(0).id()).isEqualTo("2");
     }
 
     @Test

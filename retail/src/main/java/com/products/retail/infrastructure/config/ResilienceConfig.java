@@ -5,6 +5,7 @@ import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.common.bulkhead.configuration.BulkheadConfigCustomizer;
 import io.github.resilience4j.common.circuitbreaker.configuration.CircuitBreakerConfigCustomizer;
+import io.github.resilience4j.common.ratelimiter.configuration.RateLimiterConfigCustomizer;
 import io.github.resilience4j.common.retry.configuration.RetryConfigCustomizer;
 import io.github.resilience4j.retry.RetryConfig;
 import org.slf4j.Logger;
@@ -68,5 +69,13 @@ public class ResilienceConfig {
                 return "similarProductsRetry";
             }
         };
+    }
+
+    @Bean
+    public RateLimiterConfigCustomizer similarProductsRateLimiterConfig() {
+        return RateLimiterConfigCustomizer.of("similarProducts",
+                config -> config.limitForPeriod(10)
+                        .limitRefreshPeriod(Duration.ofSeconds(1))
+                        .timeoutDuration(Duration.ofMillis(0)));
     }
 }

@@ -8,6 +8,7 @@ import com.products.retail.domain.exception.ProductNotFoundException;
 import com.products.retail.infrastructure.constant.InfrastructureConstants;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class SimilarProductsService implements GetSimilarProductsUseCase {
     @Cacheable(InfrastructureConstants.CACHE_SIMILAR_IDS)
     @CircuitBreaker(name = "similarProducts", fallbackMethod = "fallbackSimilarProducts")
     @Bulkhead(name = "similarProductsBulkhead")
+    @RateLimiter(name = "similarProducts")
     @Retry(name = "similarProductsRetry")
     @Override
     public List<ProductDetailResponse> getSimilarProducts(String productId) {

@@ -22,6 +22,7 @@ import java.util.List;
 @Validated
 @Tag(name = "Similar Products", description = "Endpoints for retrieving similar retail products")
 @ApiResponse(responseCode = "404", description = "Product not found", content = @Content(mediaType = "application/json"))
+@ApiResponse(responseCode = "429", description = "Rate limit exceeded", content = @Content(mediaType = "application/json"))
 @ApiResponse(responseCode = "503", description = "Service temporarily unavailable", content = @Content(mediaType = "application/json"))
 public class SimilarProductsController {
 

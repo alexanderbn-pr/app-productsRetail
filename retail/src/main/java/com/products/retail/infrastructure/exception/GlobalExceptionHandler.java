@@ -4,6 +4,7 @@ import com.products.retail.application.constant.ApplicationConstants;
 import com.products.retail.domain.exception.ProductNotFoundException;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -61,6 +62,15 @@ public class GlobalExceptionHandler {
         pd.setTitle(ApplicationConstants.ERROR_TOO_MANY_REQUESTS);
         pd.setDetail("Too many concurrent requests");
         return pd;
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ProblemDetail handleRequestNotPermitted(RequestNotPermitted ex) {
+        log.warn("rate_limited error={}", ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.TOO_MANY_REQUESTS);
+        problemDetail.setTitle(ApplicationConstants.ERROR_RATE_LIMITED);
+        problemDetail.setDetail("Rate limit exceeded. Please try again later.");
+        return problemDetail;
     }
 
     @ExceptionHandler(Exception.class)

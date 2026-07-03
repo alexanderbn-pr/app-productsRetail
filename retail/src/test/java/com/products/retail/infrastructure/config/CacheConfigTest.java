@@ -54,7 +54,7 @@ class CacheConfigTest {
 
         List<ProductDetail> cached = (List<ProductDetail>) wrapper.get();
         assertThat(cached).hasSize(1);
-        assertThat(cached.get(0).getName()).isEqualTo("cached-product");
+        assertThat(cached.get(0).name()).isEqualTo("cached-product");
     }
 
     @Test
@@ -69,8 +69,8 @@ class CacheConfigTest {
         assertThat(wrapper).isNotNull();
 
         ProductDetail cached = (ProductDetail) wrapper.get();
-        assertThat(cached.getName()).isEqualTo("detail-cached");
-        assertThat(cached.getPrice()).isEqualByComparingTo(new BigDecimal("99.99"));
+        assertThat(cached.name()).isEqualTo("detail-cached");
+        assertThat(cached.price()).isEqualByComparingTo(new BigDecimal("99.99"));
     }
 
     @Test
